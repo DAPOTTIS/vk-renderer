@@ -1,0 +1,6 @@
+.cache
+.idea
+.zed
+*.spv
+.clang-format
+build
