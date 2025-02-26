@@ -1,7 +1,7 @@
 # My Vulkan Renderer
 This is the repo to my simple vulkan engine (LVE) following the [Brendan Galea](https://www.youtube.com/playlist?list=PL8327DO66nu9qYVKLDmdLW_84-yE4auCR) tutorial.
 
-The main branch contains the code to the 3D branch.
+This branch contains the code up to tutorial 12, stopping to the point before it transitions to 3D code.
 
 # Building
 This project uses CMake so it can be built with an IDE like VS or Jetbrains CLion, or using either of the following commands:
