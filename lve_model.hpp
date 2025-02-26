@@ -11,27 +11,28 @@
 #include <vector>
 
 namespace lve {
-    class LveModel {
+    class LveModel { 
     public:
-        struct Vertex{
-            glm::vec2 position;
+        struct Vertex {
+            glm::vec3 position;
             glm::vec3 color;
             static std::vector<VkVertexInputBindingDescription> getBindingDescriptions();
             static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptions();
         };
-    
+
         LveModel(LveDevice &device, const std::vector<Vertex> &vertices);
         ~LveModel();
 
         LveModel(const LveModel &) = delete;
         LveModel &operator=(const LveModel &) = delete;
         LveModel() = default;
-        
+
         void bind(VkCommandBuffer commandBuffer);
         void draw(VkCommandBuffer commandBuffer);
+
     private:
         void createVertexBuffers(const std::vector<Vertex> &vertices);
-    
+
         LveDevice &lveDevice;
         VkBuffer vertexBuffer;
         VkDeviceMemory vertexBufferMemory;
