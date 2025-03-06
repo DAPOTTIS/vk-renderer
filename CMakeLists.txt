@@ -55,7 +55,8 @@ add_executable(vulkan main.cpp
         lve_window.cpp
         lve_model.cpp
         lve_renderer.cpp
-        simple_render_system.cpp)
+        simple_render_system.cpp
+        lve_camera.cpp)
 
 # Link Vulkan libraries
 target_link_libraries(vulkan PRIVATE Vulkan::Vulkan)

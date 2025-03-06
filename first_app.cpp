@@ -1,6 +1,8 @@
 #include "first_app.hpp"
+#include <iostream>
 #include <memory>
 
+#include "lve_camera.hpp"
 #include "lve_game_object.hpp"
 #include "lve_model.hpp"
 #include "simple_render_system.hpp"
@@ -24,18 +26,22 @@ namespace lve {
 
     void FirstApp::run() {
         SimpleRenderSystem simpleRenderSystem{lveDevice, lveRenderer.getSwapChainRenderPass()};
+        LveCamera camera{};
+        
 
         while (!lveWindow.shouldClose()) {
             glfwPollEvents();
+            float aspect = lveRenderer.getAspectRatio(); 
+            //camera.setOrthographicProjection(-aspect, aspect, -1, 1, -1, 1);
+            camera.setPerspectiveProjection(glm::radians(50.f), aspect, 0.1f, 10.f);
 
             if (auto commandBuffer = lveRenderer.beginFrame()) {
                 lveRenderer.beginSwapChainRenderPass(commandBuffer);
-                simpleRenderSystem.renderGameObjects(commandBuffer, gameObjects);
+                simpleRenderSystem.renderGameObjects(commandBuffer, gameObjects, camera);
                 lveRenderer.endSwapChainRenderPass(commandBuffer);
                 lveRenderer.endFrame();
             }
         }
-
         vkDeviceWaitIdle(lveDevice.device());
     }
 
@@ -102,9 +108,9 @@ namespace lve {
         std::shared_ptr<LveModel> lveModel = createCubeModel(lveDevice, {.0f, .0f, .0f});
         auto cube = LveGameObject::createGameObject();
         cube.model = lveModel;
-        cube.transform.translation = {.0f, .0f, .5f};
+        cube.transform.translation = {.0f, .0f, 2.5f};
         cube.transform.scale = {.5f, .5f, .5f};
-        
+
         gameObjects.push_back(std::move(cube));
     }
 

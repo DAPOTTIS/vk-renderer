@@ -21,7 +21,7 @@ void LveWindow::initWindow() {
 
   window = glfwCreateWindow(width, height, windowName.c_str(), nullptr, nullptr);
   glfwSetWindowUserPointer(window, this);
-  glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
+  glfwSetFramebufferSizeCallback(window, frameBufferResizeCallback);
 }
 
 void LveWindow::createWindowSurface(VkInstance instance, VkSurfaceKHR *surface) {
@@ -30,9 +30,9 @@ void LveWindow::createWindowSurface(VkInstance instance, VkSurfaceKHR *surface) 
   }
 }
 
-void LveWindow::framebufferResizeCallback(GLFWwindow *window, int width, int height) {
+void LveWindow::frameBufferResizeCallback(GLFWwindow *window, int width, int height) {
   auto lveWindow = reinterpret_cast<LveWindow *>(glfwGetWindowUserPointer(window));
-  lveWindow->framebufferResized = true;
+  lveWindow->frameBufferResized = true;
   lveWindow->width = width;
   lveWindow->height = height;
 }
