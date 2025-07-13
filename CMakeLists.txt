@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.29)
 project(vulkan)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_STANDARD 17)
+set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 
 # Gather all vertex and fragment shader source files.
 file(GLOB_RECURSE VERT_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/shaders/*.vert)
