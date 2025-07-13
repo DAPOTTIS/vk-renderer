@@ -57,7 +57,8 @@ add_executable(vulkan main.cpp
         lve_model.cpp
         lve_renderer.cpp
         simple_render_system.cpp
-        lve_camera.cpp)
+        lve_camera.cpp
+        keyboard_movement_controller.cpp)
 
 # Link Vulkan libraries
 target_link_libraries(vulkan PRIVATE Vulkan::Vulkan)
