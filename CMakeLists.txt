@@ -58,7 +58,10 @@ add_executable(vulkan main.cpp
         lve_renderer.cpp
         simple_render_system.cpp
         lve_camera.cpp
-        keyboard_movement_controller.cpp)
+        keyboard_movement_controller.cpp
+        lve_game_object.cpp
+        lve_buffer.cpp
+        lve_descriptors.cpp)
 
 # Link Vulkan libraries
 target_link_libraries(vulkan PRIVATE Vulkan::Vulkan)
@@ -66,5 +69,6 @@ target_link_libraries(vulkan PRIVATE glfw)
 # Include Vulkan headers
 target_include_directories(vulkan PRIVATE ${Vulkan_INCLUDE_DIRS})
 target_include_directories(vulkan PRIVATE ${GLFW3_INCLUDE_DIRS})
+target_include_directories(vulkan PRIVATE "libs/tinyobjloader")
 
 #add_dependencies(vulkan shaders)

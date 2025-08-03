@@ -4,3 +4,4 @@
 *.spv
 .clang-format
 build
+bin
