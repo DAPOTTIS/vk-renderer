@@ -31,10 +31,6 @@ namespace lve {
             static id_t currentId = 0;
             return LveGameObject{currentId++};
         }
-        struct RigidBody2dComponent {
-            glm::vec2 velocity;
-            float mass{1.0f};
-        };
 
         LveGameObject(const LveGameObject &) = delete;
         LveGameObject &operator=(const LveGameObject &) = delete;
@@ -46,7 +42,6 @@ namespace lve {
         std::shared_ptr<LveModel> model{};
         glm::vec3 color{};
         TransformComponent transform{};
-        RigidBody2dComponent rigidBody2d;
 
     private:
         LveGameObject(id_t objId) : id(objId) {}

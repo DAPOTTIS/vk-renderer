@@ -20,7 +20,7 @@ namespace lve {
         bool shouldClose() { return glfwWindowShouldClose(window); }
         VkExtent2D getExtent() { return {static_cast<uint32_t>(width), static_cast<uint32_t>(height)}; }
         bool wasWindowResized() {return frameBufferResized;}
-        void resetWindowResized() { frameBufferResized = 0; }
+        void resetWindowResized() { frameBufferResized = false; }
         
         void createWindowSurface(VkInstance instance, VkSurfaceKHR *surface);
         
