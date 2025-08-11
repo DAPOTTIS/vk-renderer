@@ -6,7 +6,6 @@
 #include "lve_renderer.hpp"
 #include "lve_descriptors.hpp"
 
-#include <vector>
 
 namespace lve {
     class FirstApp {
@@ -31,6 +30,6 @@ namespace lve {
         LveRenderer lveRenderer{lveWindow, lveDevice};
         
         std::unique_ptr<LveDescriptorPool> globalPool{};
-        std::vector<LveGameObject> gameObjects;
+        LveGameObject::Map gameObjects;
     };
 } // namespace lve
