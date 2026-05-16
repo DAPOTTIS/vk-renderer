@@ -6,6 +6,13 @@ namespace lve {
 
 class LveBuffer {
  public:
+ 
+ /*
+  * Creates a VK Buffer for use with staging buffers. Takes in:
+  * - Reference to LveDevice
+  * - VkDeviceSize (size of the buffer)
+  * 
+  */
   LveBuffer(
       LveDevice& device,
       VkDeviceSize instanceSize,
