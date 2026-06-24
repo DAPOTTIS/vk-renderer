@@ -1,5 +1,5 @@
 #pragma once
-
+#include "vk_mem_alloc.h"
 #include "lve_window.hpp"
 
 // std lib headers
@@ -41,13 +41,14 @@ class LveDevice {
 
   VkCommandPool getCommandPool() { return commandPool; }
   VkDevice device() { return device_; }
+  VkPhysicalDevice physicalDevice() { return physicalDevice_; };
   VkSurfaceKHR surface() { return surface_; }
   VkQueue graphicsQueue() { return graphicsQueue_; }
   VkQueue presentQueue() { return presentQueue_; }
 
-  SwapChainSupportDetails getSwapChainSupport() { return querySwapChainSupport(physicalDevice); }
+  SwapChainSupportDetails getSwapChainSupport() { return querySwapChainSupport(physicalDevice_); }
   uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
-  QueueFamilyIndices findPhysicalQueueFamilies() { return findQueueFamilies(physicalDevice); }
+  QueueFamilyIndices findPhysicalQueueFamilies() { return findQueueFamilies(physicalDevice_); }
   VkFormat findSupportedFormat(
       const std::vector<VkFormat> &candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
 
@@ -71,6 +72,7 @@ class LveDevice {
       VkDeviceMemory &imageMemory);
 
   VkPhysicalDeviceProperties properties;
+  VmaAllocator _allocator;
 
  private:
   void createInstance();
@@ -92,7 +94,7 @@ class LveDevice {
 
   VkInstance instance;
   VkDebugUtilsMessengerEXT debugMessenger;
-  VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
+  VkPhysicalDevice physicalDevice_ = VK_NULL_HANDLE;
   LveWindow &window;
   VkCommandPool commandPool;
 

@@ -10,12 +10,12 @@
 
 namespace lve{
     #define MAX_LIGHTS 10
-    
+
     struct PointLight{
         glm::vec4 position{};
         glm::vec4 color{};
     };
-    
+
     struct GlobalUbo {
       glm::mat4 projection{1.f};
       glm::mat4 view{1.f};
@@ -25,13 +25,14 @@ namespace lve{
       int numLights;
     };
 
-    
+
     struct FrameInfo{
       int frameIndex;
       float frameTime;
       VkCommandBuffer commandBuffer;
-      LveCamera &camera;  
+      LveCamera &camera;
       VkDescriptorSet globalDescriptorSet;
+      VkDescriptorSet textureDescriptorSet;
       LveGameObject::Map &gameObjects;
     };
 }

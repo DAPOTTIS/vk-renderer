@@ -1,8 +1,10 @@
-cmake_minimum_required(VERSION 3.29)
+cmake_minimum_required(VERSION 3.22)
 project(vulkan)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_STANDARD 17)
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
+
+add_subdirectory(thirdparty/VMA)
 
 # Find Vulkan package
 find_package(Vulkan REQUIRED)
@@ -19,30 +21,30 @@ set(SHADER_SPV_FILES "")
 
 # Process vertex shaders
 foreach(shader ${VERT_SOURCES})
-    # Create output file name by appending .spv to the shader file.
-    # For example, shaders/basic.vert becomes shaders/basic.vert.spv.
-    set(SPIRV_FILE "${shader}.spv")
-    add_custom_command(
+  # Create output file name by appending .spv to the shader file.
+  # For example, shaders/basic.vert becomes shaders/basic.vert.spv.
+  set(SPIRV_FILE "${shader}.spv")
+  add_custom_command(
             OUTPUT ${SPIRV_FILE}
             COMMAND ${GLSLC} ${shader} -o ${SPIRV_FILE}
             DEPENDS ${shader}
             COMMENT "Compiling vertex shader: ${shader}"
             VERBATIM
     )
-    list(APPEND SHADER_SPV_FILES ${SPIRV_FILE})
+  list(APPEND SHADER_SPV_FILES ${SPIRV_FILE})
 endforeach()
 
 # Process fragment shaders
 foreach(shader ${FRAG_SOURCES})
-    set(SPIRV_FILE "${shader}.spv")
-    add_custom_command(
+  set(SPIRV_FILE "${shader}.spv")
+  add_custom_command(
             OUTPUT ${SPIRV_FILE}
             COMMAND ${GLSLC} ${shader} -o ${SPIRV_FILE}
             DEPENDS ${shader}
             COMMENT "Compiling fragment shader: ${shader}"
             VERBATIM
     )
-    list(APPEND SHADER_SPV_FILES ${SPIRV_FILE})
+  list(APPEND SHADER_SPV_FILES ${SPIRV_FILE})
 endforeach()
 
 # Create a custom target that depends on all compiled shader files.
@@ -56,14 +58,15 @@ add_executable(${PROJECT_NAME} ${SOURCES})
 # Link Vulkan libraries
 target_link_libraries(vulkan PRIVATE Vulkan::Vulkan)
 target_link_libraries(vulkan PRIVATE glfw)
+target_link_libraries(vulkan PRIVATE GPUOpen::VulkanMemoryAllocator)
 # Include Vulkan headers
 # Include directories for your project
-target_include_directories(vulkan PRIVATE 
+target_include_directories(vulkan PRIVATE
     ${Vulkan_INCLUDE_DIRS}
     ${GLFW3_INCLUDE_DIRS}
     "libs/tinyobjloader"
-    "${PROJECT_SOURCE_DIR}/src" 
+    "${PROJECT_SOURCE_DIR}/src"
 )
 
-
+file(COPY "src/textures" DESTINATION "{PROJECT_SOURCE_DIR}")
 #add_dependencies(vulkan shaders)

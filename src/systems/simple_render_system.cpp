@@ -18,9 +18,9 @@ struct SimplePushConstantData {
 };
 
 SimpleRenderSystem::SimpleRenderSystem(
-    LveDevice& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout)
+    LveDevice& device, VkRenderPass renderPass, VkDescriptorSetLayout globalSetLayout, VkDescriptorSetLayout textureSetLayout)
     : lveDevice{device} {
-  createPipelineLayout(globalSetLayout);
+  createPipelineLayout(globalSetLayout, textureSetLayout);
   createPipeline(renderPass);
 }
 
@@ -28,13 +28,13 @@ SimpleRenderSystem::~SimpleRenderSystem() {
   vkDestroyPipelineLayout(lveDevice.device(), pipelineLayout, nullptr);
 }
 
-void SimpleRenderSystem::createPipelineLayout(VkDescriptorSetLayout globalSetLayout) {
+void SimpleRenderSystem::createPipelineLayout(VkDescriptorSetLayout globalSetLayout, VkDescriptorSetLayout textureSetLayout) {
   VkPushConstantRange pushConstantRange{};
   pushConstantRange.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
   pushConstantRange.offset = 0;
   pushConstantRange.size = sizeof(SimplePushConstantData);
 
-  std::vector<VkDescriptorSetLayout> descriptorSetLayouts{globalSetLayout};
+  std::vector<VkDescriptorSetLayout> descriptorSetLayouts{globalSetLayout, textureSetLayout};
 
   VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
   pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -72,6 +72,15 @@ void SimpleRenderSystem::renderGameObjects(FrameInfo& frameInfo) {
       0,
       1,
       &frameInfo.globalDescriptorSet,
+      0,
+      nullptr);
+  vkCmdBindDescriptorSets(
+      frameInfo.commandBuffer,
+      VK_PIPELINE_BIND_POINT_GRAPHICS,
+      pipelineLayout,
+      1,
+      1,
+      &frameInfo.textureDescriptorSet,
       0,
       nullptr);
 

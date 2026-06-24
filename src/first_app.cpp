@@ -4,6 +4,8 @@
 #include "keyboard_movement_controller.hpp"
 #include "lve_buffer.hpp"
 #include "lve_camera.hpp"
+#include "lve_descriptors.hpp"
+#include "lve_texture.hpp"
 #include "systems/simple_render_system.hpp"
 #include "systems/point_light_system.hpp"
 
@@ -23,8 +25,9 @@ namespace lve {
 FirstApp::FirstApp() {
   globalPool =
       LveDescriptorPool::Builder(lveDevice)
-          .setMaxSets(LveSwapChain::MAX_FRAMES_IN_FLIGHT)
+          .setMaxSets(LveSwapChain::MAX_FRAMES_IN_FLIGHT + 1)
           .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, LveSwapChain::MAX_FRAMES_IN_FLIGHT)
+          .addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1)
           .build();
   loadGameObjects();
 }
@@ -43,9 +46,17 @@ void FirstApp::run() {
     uboBuffers[i]->map();
   }
 
+  LveTexture texture(lveDevice);
+  texture.createTextureImage();
+
   auto globalSetLayout =
       LveDescriptorSetLayout::Builder(lveDevice)
           .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT)
+          .build();
+
+  auto textureSetLayout =
+      LveDescriptorSetLayout::Builder(lveDevice)
+          .addBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
           .build();
 
   std::vector<VkDescriptorSet> globalDescriptorSets(LveSwapChain::MAX_FRAMES_IN_FLIGHT);
@@ -55,11 +66,21 @@ void FirstApp::run() {
         .writeBuffer(0, &bufferInfo)
         .build(globalDescriptorSets[i]);
   }
+  VkDescriptorImageInfo imageInfo{};
+  imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+  imageInfo.sampler = texture.getSampler();
+  imageInfo.imageView = texture.getImageView();
 
+  VkDescriptorSet textureDescriptorSet;
+  LveDescriptorWriter(*textureSetLayout, *globalPool)
+      .writeImage(0, &imageInfo)
+      .build(textureDescriptorSet);
   SimpleRenderSystem simpleRenderSystem{
       lveDevice,
       lveRenderer.getSwapChainRenderPass(),
-      globalSetLayout->getDescriptorSetLayout()};
+      globalSetLayout->getDescriptorSetLayout(),
+      textureSetLayout->getDescriptorSetLayout()
+  };
   PointLightSystem pointLightSystem{
       lveDevice,
       lveRenderer.getSwapChainRenderPass(),
@@ -93,6 +114,7 @@ void FirstApp::run() {
           commandBuffer,
           camera,
           globalDescriptorSets[frameIndex],
+          textureDescriptorSet,
           gameObjects};
 
       // update
@@ -103,16 +125,16 @@ void FirstApp::run() {
       pointLightSystem.update(frameInfo, ubo);
       uboBuffers[frameIndex]->writeToBuffer(&ubo);
       uboBuffers[frameIndex]->flush();
-      
-      
+
+
       // render
       lveRenderer.beginSwapChainRenderPass(commandBuffer);
-      
-      
+
+
       simpleRenderSystem.renderGameObjects(frameInfo);
       pointLightSystem.render(frameInfo);
-      
-      
+
+
       lveRenderer.endSwapChainRenderPass(commandBuffer);
       lveRenderer.endFrame();
     }
@@ -130,6 +152,7 @@ void FirstApp::loadGameObjects() {
   flatVase.transform.scale = glm::vec3{3.f};
   gameObjects.emplace(flatVase.getId(), std::move(flatVase));
 
+
   lveModel = LveModel::createModelFromFile(lveDevice, "models/smooth_vase.obj");
   auto smoothVase = LveGameObject::createGameObject();
   smoothVase.model = lveModel;
@@ -143,8 +166,8 @@ void FirstApp::loadGameObjects() {
   floor.transform.translation = {0.f, .5f, 0.f};
   floor.transform.scale = {3.f, 1.f, 3.f};
   gameObjects.emplace(floor.getId(), std::move(floor));
-  
-  
+
+
   std::vector<glm::vec3> lightColors{
        {1.f, .1f, .1f},
        {.1f, .1f, 1.f},
