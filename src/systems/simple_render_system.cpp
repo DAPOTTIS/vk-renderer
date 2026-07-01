@@ -74,15 +74,7 @@ void SimpleRenderSystem::renderGameObjects(FrameInfo& frameInfo) {
       &frameInfo.globalDescriptorSet,
       0,
       nullptr);
-  vkCmdBindDescriptorSets(
-      frameInfo.commandBuffer,
-      VK_PIPELINE_BIND_POINT_GRAPHICS,
-      pipelineLayout,
-      1,
-      1,
-      &frameInfo.textureDescriptorSet,
-      0,
-      nullptr);
+
 
   for (auto& kv : frameInfo.gameObjects) {
     SimplePushConstantData push{};
@@ -90,7 +82,17 @@ void SimpleRenderSystem::renderGameObjects(FrameInfo& frameInfo) {
     if(obj.model == nullptr) continue;
     push.modelMatrix = obj.transform.mat4();
     push.normalMatrix = obj.transform.normalMatrix();
-
+    if(obj.material != nullptr){
+        vkCmdBindDescriptorSets(
+            frameInfo.commandBuffer,
+            VK_PIPELINE_BIND_POINT_GRAPHICS,
+            pipelineLayout,
+            1,
+            1,
+            &obj.material->getTextureDescriptorSet(),
+            0,
+            nullptr);
+    }
     vkCmdPushConstants(
         frameInfo.commandBuffer,
         pipelineLayout,

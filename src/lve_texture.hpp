@@ -1,3 +1,5 @@
+#pragma once
+
 #include <stb/stb_image.h>
 #include "lve_device.hpp"
 
@@ -12,7 +14,7 @@ namespace lve {
         public:
         LveTexture(LveDevice& device);
         ~LveTexture();
-        void createTextureImage();
+        void createTextureImage(std::string imgPath);
         void createImage(int width, int height);
         void transitionImageLayout(VkImageLayout oldLayout, VkImageLayout newLayout);
         VkSampler getSampler() const { return sampler; }

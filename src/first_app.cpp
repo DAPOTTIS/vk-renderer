@@ -1,10 +1,12 @@
 #include "first_app.hpp"
+#include <memory>
 #include <vulkan/vulkan_core.h>
 
 #include "keyboard_movement_controller.hpp"
 #include "lve_buffer.hpp"
 #include "lve_camera.hpp"
 #include "lve_descriptors.hpp"
+#include "lve_material.hpp"
 #include "lve_texture.hpp"
 #include "systems/simple_render_system.hpp"
 #include "systems/point_light_system.hpp"
@@ -25,9 +27,13 @@ namespace lve {
 FirstApp::FirstApp() {
   globalPool =
       LveDescriptorPool::Builder(lveDevice)
-          .setMaxSets(LveSwapChain::MAX_FRAMES_IN_FLIGHT + 1)
+          .setMaxSets(LveSwapChain::MAX_FRAMES_IN_FLIGHT + 2)
           .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, LveSwapChain::MAX_FRAMES_IN_FLIGHT)
-          .addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1)
+          .addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 100)
+          .build();
+  textureSetLayout =
+      LveDescriptorSetLayout::Builder(lveDevice)
+          .addBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
           .build();
   loadGameObjects();
 }
@@ -46,17 +52,11 @@ void FirstApp::run() {
     uboBuffers[i]->map();
   }
 
-  LveTexture texture(lveDevice);
-  texture.createTextureImage();
+
 
   auto globalSetLayout =
       LveDescriptorSetLayout::Builder(lveDevice)
           .addBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT)
-          .build();
-
-  auto textureSetLayout =
-      LveDescriptorSetLayout::Builder(lveDevice)
-          .addBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
           .build();
 
   std::vector<VkDescriptorSet> globalDescriptorSets(LveSwapChain::MAX_FRAMES_IN_FLIGHT);
@@ -66,15 +66,7 @@ void FirstApp::run() {
         .writeBuffer(0, &bufferInfo)
         .build(globalDescriptorSets[i]);
   }
-  VkDescriptorImageInfo imageInfo{};
-  imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-  imageInfo.sampler = texture.getSampler();
-  imageInfo.imageView = texture.getImageView();
 
-  VkDescriptorSet textureDescriptorSet;
-  LveDescriptorWriter(*textureSetLayout, *globalPool)
-      .writeImage(0, &imageInfo)
-      .build(textureDescriptorSet);
   SimpleRenderSystem simpleRenderSystem{
       lveDevice,
       lveRenderer.getSwapChainRenderPass(),
@@ -114,7 +106,6 @@ void FirstApp::run() {
           commandBuffer,
           camera,
           globalDescriptorSets[frameIndex],
-          textureDescriptorSet,
           gameObjects};
 
       // update
@@ -144,38 +135,57 @@ void FirstApp::run() {
 }
 
 void FirstApp::loadGameObjects() {
-  std::shared_ptr<LveModel> lveModel =
-      LveModel::createModelFromFile(lveDevice, "models/flat_vase.obj");
-  auto flatVase = LveGameObject::createGameObject();
-  flatVase.model = lveModel;
-  flatVase.transform.translation = {-.5f, .5f, 0.f};
-  flatVase.transform.scale = glm::vec3{3.f};
-  gameObjects.emplace(flatVase.getId(), std::move(flatVase));
+    auto defaultMaterial = std::make_shared<LveMaterial>(lveDevice, "textures/default.png");
+    VkDescriptorImageInfo defaultImageInfo = defaultMaterial->createImageInfo();
+    VkDescriptorSet defaultTextureDescriptorSet;
+    LveDescriptorWriter(*textureSetLayout, *globalPool)
+        .writeImage(0, &defaultImageInfo)
+        .build(defaultTextureDescriptorSet);
+    defaultMaterial->setTextureDescriptorSet(defaultTextureDescriptorSet);
+    std::shared_ptr<LveModel> lveModel =
+        LveModel::createModelFromFile(lveDevice, "models/flat_vase.obj");
+    auto flatVase = LveGameObject::createGameObject();
+    flatVase.model = lveModel;
+    flatVase.material = defaultMaterial;
+    flatVase.transform.translation = {-.5f, .5f, 0.f};
+    flatVase.transform.scale = glm::vec3{3.f};
+    gameObjects.emplace(flatVase.getId(), std::move(flatVase));
 
 
-  lveModel = LveModel::createModelFromFile(lveDevice, "models/smooth_vase.obj");
-  auto smoothVase = LveGameObject::createGameObject();
-  smoothVase.model = lveModel;
-  smoothVase.transform.translation = {.5f, .5f, 0.f};
-  smoothVase.transform.scale = glm::vec3{3.f};
-  gameObjects.emplace(smoothVase.getId(), std::move(smoothVase));
+    lveModel = LveModel::createModelFromFile(lveDevice, "models/smooth_vase.obj");
+    auto smoothVase = LveGameObject::createGameObject();
+    smoothVase.model = lveModel;
+    smoothVase.material = defaultMaterial;
 
-  lveModel = LveModel::createModelFromFile(lveDevice, "models/quad.obj");
-  auto floor = LveGameObject::createGameObject();
-  floor.model = lveModel;
-  floor.transform.translation = {0.f, .5f, 0.f};
-  floor.transform.scale = {3.f, 1.f, 3.f};
-  gameObjects.emplace(floor.getId(), std::move(floor));
+    smoothVase.transform.translation = {.5f, .5f, 0.f};
+    smoothVase.transform.scale = glm::vec3{3.f};
+    gameObjects.emplace(smoothVase.getId(), std::move(smoothVase));
+
+    auto material = std::make_shared<LveMaterial>(lveDevice, "textures/texture.jpg");
+    VkDescriptorImageInfo imageInfo = material->createImageInfo();
+    VkDescriptorSet textureDescriptorSet;
+    LveDescriptorWriter(*textureSetLayout, *globalPool)
+        .writeImage(0, &imageInfo)
+        .build(textureDescriptorSet);
+    material->setTextureDescriptorSet(textureDescriptorSet);
 
 
-  std::vector<glm::vec3> lightColors{
-       {1.f, .1f, .1f},
-       {.1f, .1f, 1.f},
-       {.1f, 1.f, .1f},
-       {1.f, 1.f, .1f},
-       {.1f, 1.f, 1.f},
-       {1.f, 1.f, 1.f}  //
-    };
+    lveModel = LveModel::createModelFromFile(lveDevice, "models/quad.obj");
+    auto floor = LveGameObject::createGameObject();
+    floor.material = material;
+    floor.model = lveModel;
+    floor.transform.translation = {0.f, .5f, 0.f};
+    floor.transform.scale = {3.f, 1.f, 3.f};
+    gameObjects.emplace(floor.getId(), std::move(floor));
+
+    std::vector<glm::vec3> lightColors{
+        {1.f, .1f, .1f},
+        {.1f, .1f, 1.f},
+        {.1f, 1.f, .1f},
+        {1.f, 1.f, .1f},
+        {.1f, 1.f, 1.f},
+        {1.f, 1.f, 1.f}
+        };
 
     for(int i = 0; i < lightColors.size(); i++){
         auto pointLight = LveGameObject::makePointLight(0.2f);

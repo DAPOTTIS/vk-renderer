@@ -56,13 +56,7 @@ LveDevice::LveDevice(LveWindow &window) : window{window} {
   pickPhysicalDevice();
   createLogicalDevice();
   createCommandPool();
-
-  // Initialize VMA allocator
-  VmaAllocatorCreateInfo allocatorInfo{};
-  allocatorInfo.physicalDevice = physicalDevice_;
-  allocatorInfo.device = device_;
-  allocatorInfo.instance = instance;
-  vmaCreateAllocator(&allocatorInfo, &_allocator);
+  initAllocator();
 }
 
 LveDevice::~LveDevice() {
@@ -76,6 +70,14 @@ LveDevice::~LveDevice() {
 
   vkDestroySurfaceKHR(instance, surface_, nullptr);
   vkDestroyInstance(instance, nullptr);
+}
+
+void LveDevice::initAllocator() {
+    VmaAllocatorCreateInfo allocatorInfo{};
+    allocatorInfo.physicalDevice = physicalDevice_;
+    allocatorInfo.device = device_;
+    allocatorInfo.instance = instance;
+    vmaCreateAllocator(&allocatorInfo, &_allocator);
 }
 
 void LveDevice::createInstance() {

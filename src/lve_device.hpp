@@ -81,7 +81,7 @@ class LveDevice {
   void pickPhysicalDevice();
   void createLogicalDevice();
   void createCommandPool();
-
+  void initAllocator();
   // helper functions
   bool isDeviceSuitable(VkPhysicalDevice device);
   std::vector<const char *> getRequiredExtensions();

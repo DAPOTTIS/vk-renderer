@@ -2,11 +2,12 @@
 
 #include "lve_model.hpp"
 #include <unordered_map>
+#include <memory>
 
 #include <glm/ext/matrix_transform.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-#include <memory>
+#include "lve_material.hpp"
 
 namespace lve {
     // @todo: maybe implement as quaternion in the future
@@ -27,19 +28,19 @@ namespace lve {
     struct PointLightComponent{
         float lightIntensity = 1.0f;
     };
-    
+
     class LveGameObject {
     public:
         using id_t = unsigned int;
         using Map = std::unordered_map<id_t, LveGameObject>;
-        
+
         static LveGameObject createGameObject() {
             static id_t currentId = 0;
             return LveGameObject{currentId++};
         }
-        
+
         static LveGameObject makePointLight(float intensity = 10.f, float radius = 0.1f, glm::vec3 color = glm::vec3(1.f));
-        
+
         LveGameObject(const LveGameObject &) = delete;
         LveGameObject &operator=(const LveGameObject &) = delete;
         LveGameObject(LveGameObject &&) = default;
@@ -48,9 +49,10 @@ namespace lve {
         const id_t getId() { return id; }
 
         std::shared_ptr<LveModel> model{};
+        std::shared_ptr<LveMaterial> material{};
         glm::vec3 color{};
         TransformComponent transform{};
-        
+
         std::unique_ptr<PointLightComponent> pointLight = nullptr;
 
     private:

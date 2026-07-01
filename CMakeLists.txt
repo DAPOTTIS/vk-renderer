@@ -68,5 +68,4 @@ target_include_directories(vulkan PRIVATE
     "${PROJECT_SOURCE_DIR}/src"
 )
 
-file(COPY "src/textures" DESTINATION "{PROJECT_SOURCE_DIR}")
 #add_dependencies(vulkan shaders)

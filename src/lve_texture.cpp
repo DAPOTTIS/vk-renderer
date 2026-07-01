@@ -9,7 +9,6 @@
 
 namespace lve{
     LveTexture::LveTexture(LveDevice& device) : device{device} {
-        createTextureImage();
     }
 
     LveTexture::~LveTexture() {
@@ -65,14 +64,11 @@ namespace lve{
         device.endSingleTimeCommands(commandBuffer);
     }
 
-    void LveTexture::createTextureImage(){
+    void LveTexture::createTextureImage(std::string imgPath){
         int texWidth, texHeight, texChannels;
-        stbi_uc* pixels = stbi_load("textures/texture.jpg", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+        stbi_uc* pixels = stbi_load(imgPath.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
         if(!pixels) {
             pixels = stbi_load("textures/default.png", &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
-        }
-        if(!pixels) {
-            throw std::runtime_error("failed to load texture image!");
         }
 
         const VkDeviceSize imageSize = texWidth * texHeight * 4;
@@ -195,4 +191,3 @@ namespace lve{
         }
     }
 }
-
