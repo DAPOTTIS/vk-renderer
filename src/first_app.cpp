@@ -7,7 +7,6 @@
 #include "lve_camera.hpp"
 #include "lve_descriptors.hpp"
 #include "lve_material.hpp"
-#include "lve_texture.hpp"
 #include "systems/simple_render_system.hpp"
 #include "systems/point_light_system.hpp"
 
@@ -21,13 +20,18 @@
 #include <cassert>
 #include <chrono>
 
+//imgui
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_vulkan.h"
+
 namespace lve {
 
 
 FirstApp::FirstApp() {
   globalPool =
       LveDescriptorPool::Builder(lveDevice)
-          .setMaxSets(LveSwapChain::MAX_FRAMES_IN_FLIGHT + 2)
+          .setMaxSets(LveSwapChain::MAX_FRAMES_IN_FLIGHT + 100)
           .addPoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, LveSwapChain::MAX_FRAMES_IN_FLIGHT)
           .addPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 100)
           .build();
@@ -36,9 +40,42 @@ FirstApp::FirstApp() {
           .addBinding(0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT)
           .build();
   loadGameObjects();
+  initImGui();
 }
 
-FirstApp::~FirstApp() {}
+FirstApp::~FirstApp() {
+  vkDeviceWaitIdle(lveDevice.device());
+  ImGui_ImplVulkan_Shutdown();
+  ImGui_ImplGlfw_Shutdown();
+  ImGui::DestroyContext();
+}
+
+void FirstApp::initImGui() {
+  // Create ImGui context
+  IMGUI_CHECKVERSION();
+  ImGui::CreateContext();
+  ImGui::StyleColorsDark();
+
+  // Initialize GLFW backend
+  ImGui_ImplGlfw_InitForVulkan(lveWindow.getGLFWwindow(), true);
+
+  // Initialize Vulkan backend
+  ImGui_ImplVulkan_InitInfo init_info{};
+  init_info.ApiVersion = VK_API_VERSION_1_2;
+  init_info.Instance = lveDevice.getInstance();
+  init_info.PhysicalDevice = lveDevice.physicalDevice();
+  init_info.Device = lveDevice.device();
+  init_info.QueueFamily = lveDevice.findPhysicalQueueFamilies().graphicsFamily;
+  init_info.Queue = lveDevice.graphicsQueue();
+  init_info.DescriptorPoolSize = 10;  // ImGui creates its own pool
+  init_info.MinImageCount = 2;
+  init_info.ImageCount = LveSwapChain::MAX_FRAMES_IN_FLIGHT;
+  init_info.PipelineInfoMain.RenderPass = lveRenderer.getSwapChainRenderPass();
+  init_info.PipelineInfoMain.Subpass = 0;
+  init_info.PipelineInfoMain.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
+
+  ImGui_ImplVulkan_Init(&init_info);
+}
 
 void FirstApp::run() {
   std::vector<std::unique_ptr<LveBuffer>> uboBuffers(LveSwapChain::MAX_FRAMES_IN_FLIGHT);
@@ -84,6 +121,7 @@ void FirstApp::run() {
   KeyboardMovementController cameraController{};
 
   auto currentTime = std::chrono::high_resolution_clock::now();
+
   while (!lveWindow.shouldClose()) {
     glfwPollEvents();
 
@@ -121,10 +159,19 @@ void FirstApp::run() {
       // render
       lveRenderer.beginSwapChainRenderPass(commandBuffer);
 
-
       simpleRenderSystem.renderGameObjects(frameInfo);
       pointLightSystem.render(frameInfo);
 
+      // ImGui rendering - draw on top of everything
+      ImGui_ImplVulkan_NewFrame();
+      ImGui_ImplGlfw_NewFrame();
+      ImGui::NewFrame();
+
+      // Demo window for testing - remove later
+      ImGui::ShowDemoWindow();
+
+      ImGui::Render();
+      ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer);
 
       lveRenderer.endSwapChainRenderPass(commandBuffer);
       lveRenderer.endFrame();

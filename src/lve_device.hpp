@@ -70,6 +70,7 @@ class LveDevice {
       VkMemoryPropertyFlags properties,
       VkImage &image,
       VkDeviceMemory &imageMemory);
+  const VkInstance& getInstance() { return instance; };
 
   VkPhysicalDeviceProperties properties;
   VmaAllocator _allocator;

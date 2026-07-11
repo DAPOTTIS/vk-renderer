@@ -1,3 +1,6 @@
 [submodule "thirdparty/VMA"]
 	path = thirdparty/VMA
 	url = https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator
+[submodule "thirdparty/imgui"]
+	path = thirdparty/imgui
+	url = https://github.com/ocornut/imgui/

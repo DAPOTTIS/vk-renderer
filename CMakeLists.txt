@@ -5,6 +5,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
 
 add_subdirectory(thirdparty/VMA)
+#add_subdirectory(thirdparty/imgui)
 
 # Find Vulkan package
 find_package(Vulkan REQUIRED)
@@ -53,7 +54,17 @@ add_custom_target(shaders ALL DEPENDS ${SHADER_SPV_FILES})
 
 # Add the executable
 file(GLOB_RECURSE SOURCES ${PROJECT_SOURCE_DIR}/src/*.cpp)
-add_executable(${PROJECT_NAME} ${SOURCES})
+set(IMGUI_SOURCES
+    thirdparty/imgui/imgui.cpp
+    thirdparty/imgui/imgui_draw.cpp
+    thirdparty/imgui/imgui_tables.cpp
+    thirdparty/imgui/imgui_widgets.cpp
+    thirdparty/imgui/imgui_demo.cpp
+    thirdparty/imgui/backends/imgui_impl_glfw.cpp
+    thirdparty/imgui/backends/imgui_impl_vulkan.cpp
+)
+
+add_executable(${PROJECT_NAME} ${SOURCES} ${IMGUI_SOURCES})
 
 # Link Vulkan libraries
 target_link_libraries(vulkan PRIVATE Vulkan::Vulkan)
@@ -66,6 +77,8 @@ target_include_directories(vulkan PRIVATE
     ${GLFW3_INCLUDE_DIRS}
     "libs/tinyobjloader"
     "${PROJECT_SOURCE_DIR}/src"
+    "${PROJECT_SOURCE_DIR}/thirdparty/imgui"
+    "${PROJECT_SOURCE_DIR}/thirdparty/imgui/backends"
 )
 
 #add_dependencies(vulkan shaders)

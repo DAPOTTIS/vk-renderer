@@ -23,6 +23,7 @@ namespace lve {
 
     private:
         void loadGameObjects();
+        void initImGui();
 
 
         LveWindow lveWindow{WIDTH, HEIGHT, "Hello Vulkan!"};
