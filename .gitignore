@@ -5,3 +5,4 @@
 .clang-format
 build
 bin
+.agent

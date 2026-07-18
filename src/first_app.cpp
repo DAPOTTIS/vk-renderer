@@ -15,6 +15,7 @@
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm/glm.hpp>
 #include <glm/gtc/constants.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 // std
 #include <cassert>
@@ -51,30 +52,50 @@ FirstApp::~FirstApp() {
 }
 
 void FirstApp::initImGui() {
-  // Create ImGui context
-  IMGUI_CHECKVERSION();
-  ImGui::CreateContext();
-  ImGui::StyleColorsDark();
+    // Create ImGui context
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGui::StyleColorsDark();
 
-  // Initialize GLFW backend
-  ImGui_ImplGlfw_InitForVulkan(lveWindow.getGLFWwindow(), true);
+    // Initialize GLFW backend
+    ImGui_ImplGlfw_InitForVulkan(lveWindow.getGLFWwindow(), true);
 
-  // Initialize Vulkan backend
-  ImGui_ImplVulkan_InitInfo init_info{};
-  init_info.ApiVersion = VK_API_VERSION_1_2;
-  init_info.Instance = lveDevice.getInstance();
-  init_info.PhysicalDevice = lveDevice.physicalDevice();
-  init_info.Device = lveDevice.device();
-  init_info.QueueFamily = lveDevice.findPhysicalQueueFamilies().graphicsFamily;
-  init_info.Queue = lveDevice.graphicsQueue();
-  init_info.DescriptorPoolSize = 10;  // ImGui creates its own pool
-  init_info.MinImageCount = 2;
-  init_info.ImageCount = LveSwapChain::MAX_FRAMES_IN_FLIGHT;
-  init_info.PipelineInfoMain.RenderPass = lveRenderer.getSwapChainRenderPass();
-  init_info.PipelineInfoMain.Subpass = 0;
-  init_info.PipelineInfoMain.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
+    // Initialize Vulkan backend
+    ImGui_ImplVulkan_InitInfo init_info{};
+    init_info.ApiVersion = VK_API_VERSION_1_2;
+    init_info.Instance = lveDevice.getInstance();
+    init_info.PhysicalDevice = lveDevice.physicalDevice();
+    init_info.Device = lveDevice.device();
+    init_info.QueueFamily = lveDevice.findPhysicalQueueFamilies().graphicsFamily;
+    init_info.Queue = lveDevice.graphicsQueue();
+    init_info.DescriptorPoolSize = 10;  // ImGui creates its own pool
+    init_info.MinImageCount = 2;
+    init_info.ImageCount = LveSwapChain::MAX_FRAMES_IN_FLIGHT;
+    init_info.PipelineInfoMain.RenderPass = lveRenderer.getSwapChainRenderPass();
+    init_info.PipelineInfoMain.Subpass = 0;
+    init_info.PipelineInfoMain.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
 
-  ImGui_ImplVulkan_Init(&init_info);
+    ImGui_ImplVulkan_Init(&init_info);
+}
+
+void FirstApp::uiLoop() {
+    ImGui::Begin("Stats");
+    {
+        ImGui::Text("%.0f fps", 1.f / frameTime);
+        ImGui::Text("%.1f ms", frameTime * 1000.f);
+    }
+
+    {
+        static float light_color[3] = {1.f, 1.f, 1.f};
+        ImGui::ColorEdit3("Light Color", (float *)&light_color, ImGuiColorEditFlags_None); ImGui::SameLine();
+        if(ImGui::Button("Add Light")){
+            auto pointLight = LveGameObject::makePointLight(0.2f);
+            pointLight.color = glm::make_vec3(light_color);
+            pointLight.transform.translation = glm::vec3(viewerObject.transform.translation);
+            gameObjects.emplace(pointLight.getId(), std::move(pointLight));
+        }
+    }
+    ImGui::End();
 }
 
 void FirstApp::run() {
@@ -116,21 +137,25 @@ void FirstApp::run() {
       globalSetLayout->getDescriptorSetLayout()};
   LveCamera camera{};
 
-  auto viewerObject = LveGameObject::createGameObject();
   viewerObject.transform.translation.z = -2.5f;
   KeyboardMovementController cameraController{};
 
   auto currentTime = std::chrono::high_resolution_clock::now();
 
+  ImGuiIO &io = ImGui::GetIO();
+  io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+  io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
+
   while (!lveWindow.shouldClose()) {
     glfwPollEvents();
 
     auto newTime = std::chrono::high_resolution_clock::now();
-    float frameTime =
+    frameTime =
         std::chrono::duration<float, std::chrono::seconds::period>(newTime - currentTime).count();
     currentTime = newTime;
 
-    cameraController.moveInPlaneXZ(lveWindow.getGLFWwindow(), frameTime, viewerObject);
+    if(!io.WantCaptureKeyboard)
+        cameraController.moveInPlaneXZ(lveWindow.getGLFWwindow(), frameTime, viewerObject);
     camera.setViewYXZ(viewerObject.transform.translation, viewerObject.transform.rotation);
 
     float aspect = lveRenderer.getAspectRatio();
@@ -169,6 +194,8 @@ void FirstApp::run() {
 
       // Demo window for testing - remove later
       ImGui::ShowDemoWindow();
+
+      uiLoop();
 
       ImGui::Render();
       ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer);

@@ -24,7 +24,7 @@ namespace lve {
     private:
         void loadGameObjects();
         void initImGui();
-
+        void uiLoop();
 
         LveWindow lveWindow{WIDTH, HEIGHT, "Hello Vulkan!"};
         LveDevice lveDevice{lveWindow};
@@ -32,6 +32,8 @@ namespace lve {
 
         std::unique_ptr<LveDescriptorPool> globalPool{};
         LveGameObject::Map gameObjects;
+        LveGameObject viewerObject = LveGameObject::createGameObject();
         std::unique_ptr<LveDescriptorSetLayout> textureSetLayout;
+        float frameTime = 0.f;
     };
 } // namespace lve
